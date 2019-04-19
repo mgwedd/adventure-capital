@@ -2,20 +2,18 @@
 // =============================================================
 // ================ SEARCH LISTENERS & HANDLERS ================
 function watchSearchForm() {
-  let searchInput;
-  let maxResults;
   $('form').submit(event => {
     event.preventDefault();
     try {
       let rawInput = $('#js-search-parks').val();
       // Input must be at least two contiguous letters. Only commas and spaces allowed as seperators.
-      if (!/^(\s*[a-zA-Z]{2}\s*,?)+$/.test(rawInput)) {
-        throw Error('Whoops, that won\'t work. Enter full state name(s) like "New York, Massachusetts" or state code(s) like "NY, MA"');
-      } else {
-        searchInput = rawInput.replace(/\s|,/g, ',');
-        maxResults = $('#js-max-results').val();
+      if (/^(\s*[a-zA-Z]{2}\s*,?)+$/.test(rawInput)) {
+        const searchInput = rawInput.replace(/[, ]+/g, ',').trim();
+        const maxResults = $('#js-max-results').val();
         getParks(searchInput, maxResults);
-      } 
+      } else {
+        throw Error('Whoops, that won\'t work. Enter state state code(s) like "NY, MA"');
+      }
     } catch(error) {
       alert(error.message);
     }
@@ -25,11 +23,12 @@ function watchSearchForm() {
 function watchSearchResults() {
   $('#js-search-results-list').on('click', '.js-search-result-title', event => {
     event.preventDefault();
-    const selectedParkID = $(event.currentTarget).attr("id"); // this is the location in the responseObj of the obj containing the selected park.
-    getAccuweatherLocation(STORE.npsResponse.data[selectedParkID].latLong);
+    const selectedParkID = $(event.currentTarget).data("data-nps-response-index"); // This is the location in the responseObj of the obj containing the selected park.
+    STORE.selectedPark = STORE.npsResponse.data[selectedParkID];
+    getAccuweatherLocation(STORE.selectedPark.latLong);
   });
 }
-// ===========================================================================
+// ================================================================
 // ======================= QUERY FORMATTING =======================
 function formatQueryParams(params) {
   const queryItems = Object.keys(params)
@@ -38,36 +37,33 @@ function formatQueryParams(params) {
 }
 // ==============================================================
 // ======================== NPS API CALL ========================
-function getParks(searchInput, maxResults) {
+async function getParks(searchInput, maxResults) {
   const npsSearchURL = 'https://developer.nps.gov/api/v1/parks?';
   const npsApiKey = 'JVeSBRlmeioOK5HNO6ev6IpsIwcPWH1dXgpk2SxN';
   const params = {
     'stateCode': searchInput,
     limit: parseInt(maxResults),
     api_key: npsApiKey
-  };
+  }
   const formattedQuery = formatQueryParams(params);
   const url = npsSearchURL + formattedQuery;
-  fetch(url)
-    .then(response => {
-      if (response.ok) {
-        return response.json();
-      }
-      throw new Error(response.statusText);
-    })
-    .then(responseObj => {
-      renderParkSearchResults(responseObj, maxResults);
-      STORE.npsResponse = responseObj;
-      watchSearchResults();
-      console.log('Here\'s the response from NPS: ', responseObj);
-    })
-    .catch(error => {
+  try {
+    const npsResponse = await fetch(url);
+    if (!npsResponse.ok) {
+      throw new Error(npsResponse.statusText);
+    }
+    const npsResponseObj = await npsResponse.json();
+    renderParkSearchResults(npsResponseObj, maxResults);
+    STORE.npsResponse = npsResponseObj;
+    watchSearchResults();
+    console.log('Here\'s the response from NPS: ', npsResponseObj);
+    } catch(error) {
       $('#js-error-message').text(`Uh ho... We couldn't complete your request. Here's why: ${error.message}`);
-    });
+    }
 }
 // ===============================================================
 // ================ ACCUWEATHER LOCATION API CALL ================
-function getAccuweatherLocation(parkCoordinates) {
+async function getAccuweatherLocation(parkCoordinates) {
   const LocationSearchURL = 'http://dataservice.accuweather.com/locations/v1/cities/geoposition/search?';
   const locationAPIKey = '4necePoPQpKdSd2EbjAHXIotYDIna8vN';
   // NPS returns with lat and lon in string, which AccuWeather doesn't want.
@@ -78,54 +74,48 @@ function getAccuweatherLocation(parkCoordinates) {
   };
   const formattedQuery = formatQueryParams(params);
   const url = LocationSearchURL + formattedQuery;
-  fetch(url)
-    .then(response => {
-      if (response.ok) {
-        return response.json();
-      }
-      throw new Error(response.statusText);
-    })
-    .then(responseObj => {
-      // pass the location key Accuweather returns for the park's geoposition into getForeceast().
-      getForecast(responseObj.Key);
-      STORE.locationResponse = responseObj;
-      console.log('Here\'s the response from AccuWeather\'s Location API: ', responseObj);
-    })
-    .catch(error => {
-      $('#js-error-message').text(`Uh ho... We couldn't complete your request. Here's why: ${error.message}`);
-    });
+  try {
+    const locationResponse = await fetch(url); 
+    if (!locationResponse.ok) {
+      throw new Error(locationResponse.statusText);
+    }
+    const locationResponseObj = await npsResponse.json();
+    // pass the location key Accuweather returns for the park's geoposition into getForeceast().
+    getForecast(locationResponseObj.Key);
+    STORE.locationResponse = locationResponseObj;
+    console.log('Here\'s the response from AccuWeather\'s Location API: ', locationResponseObj);
+  } catch(error) {
+    $('#js-error-message').text(`Uh ho... We couldn't complete your request. Here's why: ${error.message}`);
+  }
 }
 // ===============================================================
 // ================ ACCUWEATHER FORECAST API CALL ================
-function getForecast(locationKey) {
+async function getForecast(locationKey) {
   const forecastSearchURL = 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/';
   const forecastApiKey = '4necePoPQpKdSd2EbjAHXIotYDIna8vN';
   const url = forecastSearchURL + locationKey + '?' + 'apiKey=' + forecastApiKey;
-  fetch(url)
-    .then(response => {
-      if (response.ok) {
-        return response.json();
-      }
-      throw new Error(response.statusText);
-    })
-    .then(responseObj => {
-      STORE.forecastResponse = responseObj;
-      renderModal();
-      console.log('Here\'s the response from AccuWeather\'s Forecast API: ', responseObj);
-    })
-    .catch(error => {
-      $('#js-error-message').text(`Uh ho... We couldn't complete your request. Here's why: ${error.message}`);
-    });
+  const forecastResponse = await fetch(url);
+  try {
+    if (!forecastResponse.ok) {
+      throw new Error(forecastResponse.statusText);
+    }
+    const forecastResponseObj = await forecastResponse.json();
+    STORE.forecastResponse = forecastResponseObj;
+    renderModal();
+    console.log('Here\'s the response from AccuWeather\'s Forecast API: ', forecastResponseObj);
+  } catch(error) {
+    $('#js-error-message').text(`Uh ho... We couldn't complete your request. Here's why: ${error.message}`);
+  }
 }
-// ===========================================
-// ======== DISPLAY RESULTS (ALL APIS) =======
+// ====================================================
+// ======== DISPLAY RESULTS (ALL APIS) ================
 function renderParkSearchResults(responseObj, maxResults) {
     $('#js-search-results-list').empty();
     for (let i = 0; i < maxResults && i < responseObj.data.length; i++) {
       $('#js-search-results-list').append(
-        // The `ì` added as an ID to the title represents index of the object in the responseObj.data array from which the result is being displayed. 
+        // The `ì` added as a data attr represents index of the object in the responseObj.data array from which the result is being displayed. 
         // This is so that other parts of the application (e.g. listeners) can easily locate the data to which this title refers.
-        `<li><h3 id="${i}" class="js-search-result-title search-result-title">${responseObj.data[i].fullName}</h3>
+        `<li><h3 data-nps-response-index="${i}" class="js-search-result-title search-result-title">${responseObj.data[i].fullName}</h3>
         <p><strong>State(s):</strong> ${responseObj.data[i].states}</p>
         <p><strong>Description:</strong> ${responseObj.data[i].description}</p>
         <p><strong>Designation:</strong> ${responseObj.data[i].designation}</p>
@@ -144,6 +134,7 @@ function renderModal(parkFullName) {
 
 function renderForecast(responseObj) {
   // called from renderModal
+  //  look at Apple weather app. Simple.
 }
 
 function renderMoreParkInformation() {
