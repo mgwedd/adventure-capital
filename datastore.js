@@ -1,6 +1,8 @@
 const STORE = {
-    npsResponse: {}, 
-    locationResponse: {}, 
-    forecastResponse: {}, 
+    npsParksResponse: {}, 
+    npsCampgroundsResponse: {},
+    npsVisitorsCenterResponse: {},
+    accuLocationResponse: {}, 
+    accuForecastResponse: {}, 
     selectedPark: {},
 }

@@ -24,7 +24,7 @@ function watchSearchResults() {
   $('#js-search-results-list').on('click', '.js-search-result-title', event => {
     event.preventDefault();
     const selectedParkID = $(event.currentTarget).data("data-nps-response-index"); // This is the location in the responseObj of the obj containing the selected park.
-    STORE.selectedPark = STORE.npsResponse.data[selectedParkID];
+    STORE.selectedPark = STORE.npsParksResponse.data[selectedParkID];
     getAccuweatherLocation(STORE.selectedPark.latLong);
   });
 }
@@ -52,11 +52,10 @@ async function getParks(searchInput, maxResults) {
     if (!npsResponse.ok) {
       throw new Error(npsResponse.statusText);
     }
-    const npsResponseObj = await npsResponse.json();
-    renderParkSearchResults(npsResponseObj, maxResults);
-    STORE.npsResponse = npsResponseObj;
+    STORE.npsParksResponse = await npsResponse.json();;
+    renderParkSearchResults(maxResults);
     watchSearchResults();
-    console.log('Here\'s the response from NPS: ', npsResponseObj);
+    console.log('Here\'s the response from NPS: ', STORE.npsParksResponse);
     } catch(error) {
       $('#js-error-message').text(`Uh ho... We couldn't complete your request. Here's why: ${error.message}`);
     }
@@ -79,11 +78,10 @@ async function getAccuweatherLocation(parkCoordinates) {
     if (!locationResponse.ok) {
       throw new Error(locationResponse.statusText);
     }
-    const locationResponseObj = await npsResponse.json();
     // pass the location key Accuweather returns for the park's geoposition into getForeceast().
-    getForecast(locationResponseObj.Key);
-    STORE.locationResponse = locationResponseObj;
-    console.log('Here\'s the response from AccuWeather\'s Location API: ', locationResponseObj);
+    STORE.accuLocationResponse = await locationResponse.json();
+    getForecast(STORE.accuLocationResponse.Key);
+    console.log('Here\'s the response from AccuWeather\'s Location API: ', STORE.accuLocationResponse);
   } catch(error) {
     $('#js-error-message').text(`Uh ho... We couldn't complete your request. Here's why: ${error.message}`);
   }
@@ -99,23 +97,23 @@ async function getForecast(locationKey) {
     if (!forecastResponse.ok) {
       throw new Error(forecastResponse.statusText);
     }
-    const forecastResponseObj = await forecastResponse.json();
-    STORE.forecastResponse = forecastResponseObj;
+    STORE.accuForecastResponse = await forecastResponse.json();;
     renderModal();
-    console.log('Here\'s the response from AccuWeather\'s Forecast API: ', forecastResponseObj);
+    console.log('Here\'s the response from AccuWeather\'s Forecast API: ', STORE.accuForecastResponse);
   } catch(error) {
     $('#js-error-message').text(`Uh ho... We couldn't complete your request. Here's why: ${error.message}`);
   }
 }
 // ====================================================
 // ======== DISPLAY RESULTS (ALL APIS) ================
-function renderParkSearchResults(responseObj, maxResults) {
+function renderParkSearchResults(maxResults) {
     $('#js-search-results-list').empty();
-    for (let i = 0; i < maxResults && i < responseObj.data.length; i++) {
+    for (let i = 0; i < maxResults && i < STORE.npsResponse.data.length; i++) {
       $('#js-search-results-list').append(
         // The `ì` added as a data attr represents index of the object in the responseObj.data array from which the result is being displayed. 
         // This is so that other parts of the application (e.g. listeners) can easily locate the data to which this title refers.
         `<li><h3 data-nps-response-index="${i}" class="js-search-result-title search-result-title">${responseObj.data[i].fullName}</h3>
+        <img src="${responseObj.data[i].images[0].url}">${responseObj.data[i].states}</img>
         <p><strong>State(s):</strong> ${responseObj.data[i].states}</p>
         <p><strong>Description:</strong> ${responseObj.data[i].description}</p>
         <p><strong>Designation:</strong> ${responseObj.data[i].designation}</p>
@@ -128,18 +126,29 @@ function renderParkSearchResults(responseObj, maxResults) {
 
 function renderModal(parkFullName) {
   // this is the master function for the Modal screen. 
-  // renderForecast();
-  // renderMoreParkInformation();
+  $('#js-nps-modal-park-card-container, #js-weather-modal-card-container').empty(); // Is this needed ...? 
+  $('#js-nps-modal-park-card-container, #js-weather-modal-card-container').removeClass('hidden');
+  // renderForecastCard();
+  // renderMoreParkInfoCard();
 }
 
-function renderForecast(responseObj) {
+function renderForecastCard(responseObj) {
   // called from renderModal
-  //  look at Apple weather app. Simple.
+  // look at Apple weather app. Simple.
 }
 
-function renderMoreParkInformation() {
+function renderMoreParkInfoCard() {
   // called from renderModal
   // this function just pulls more info from NPS's response, like hiking and camping info. Or it makes another more if needed, for a diff. endpoint.
+  $('#js-nps-modal-park-card-container').html(
+    ``
+  );
+  // Name
+  // Image
+  // description 
+  // camping info (if any) (new call)
+  // visitor’s center (new call)
+  // directions info linked to directions url.
 }
 
 // ========= DOCUMENT READY ===========
