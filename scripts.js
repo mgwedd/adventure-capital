@@ -26,9 +26,9 @@ function watchSearchForm() {
 }
 
 function watchSearchResults() {
-  $('#js-search-results-list').on('click', '.js-search-result-title', event => {
+  $('#js-search-results-list').on('click', '.js-search-result-title', function(event) {
     event.preventDefault();
-    const selectedParkID = $(this).attr("data-park-index"); // This is the location in the responseObj of the obj containing the selected park.
+    const selectedParkID = parseInt($(this).attr("data-park-index")); // This is the location in the responseObj of the obj containing the selected park.
     STORE.selectedPark = STORE.npsParksResponse.data[selectedParkID];
     try {
       getAccuLocation();
@@ -81,6 +81,7 @@ async function getAccuLocation() {
   };
   const request = new Request(LocationSearchURL + formatQueryParams(params));
   const headers = new Headers({
+      'mode': 'no-cors',
       'Accept': '*/*', 
       'Accept-Encoding': 'gzip', 
       'Accept-Language': 'en-US', 
@@ -108,6 +109,7 @@ async function getAccuForecast() {
 
   const request = new Request(forecastUrl);
   const headers = new Headers({
+      'mode': 'no-cors',
       'Accept': '*/*', 
       'Accept-Encoding': 'gzip', 
       'Accept-Language': 'en-US', 
