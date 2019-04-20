@@ -36,7 +36,7 @@ function formatQueryParams(params) {
   return queryItems.join('&');
 }
 // ==============================================================
-// ======================== NPS API CALL ========================
+// ======================== NPS API CALLS ========================
 async function getParks(searchInput, maxResults) {
   const npsSearchURL = 'https://developer.nps.gov/api/v1/parks?';
   const npsApiKey = 'JVeSBRlmeioOK5HNO6ev6IpsIwcPWH1dXgpk2SxN';
@@ -52,7 +52,7 @@ async function getParks(searchInput, maxResults) {
     if (!npsResponse.ok) {
       throw new Error(npsResponse.statusText);
     }
-    STORE.npsParksResponse = await npsResponse.json();;
+    STORE.npsParksResponse = await npsResponse.json();
     renderParkSearchResults(maxResults);
     watchSearchResults();
     console.log('Here\'s the response from NPS: ', STORE.npsParksResponse);
@@ -60,6 +60,7 @@ async function getParks(searchInput, maxResults) {
       $('#js-error-message').text(`Uh ho... We couldn't complete your request. Here's why: ${error.message}`);
     }
 }
+
 // ===============================================================
 // ================ ACCUWEATHER LOCATION API CALL ================
 async function getAccuweatherLocation(parkCoordinates) {
@@ -108,48 +109,60 @@ async function getForecast(locationKey) {
 // ======== DISPLAY RESULTS (ALL APIS) ================
 function renderParkSearchResults(maxResults) {
     $('#js-search-results-list').empty();
-    for (let i = 0; i < maxResults && i < STORE.npsResponse.data.length; i++) {
+    for (let i = 0; i < maxResults && i < STORE.npsParksResponse.data.length; i++) {
       $('#js-search-results-list').append(
         // The `ì` added as a data attr represents index of the object in the responseObj.data array from which the result is being displayed. 
         // This is so that other parts of the application (e.g. listeners) can easily locate the data to which this title refers.
-        `<li><h3 data-nps-response-index="${i}" class="js-search-result-title search-result-title">${responseObj.data[i].fullName}</h3>
-        <img src="${responseObj.data[i].images[0].url}">${responseObj.data[i].states}</img>
-        <p><strong>State(s):</strong> ${responseObj.data[i].states}</p>
-        <p><strong>Description:</strong> ${responseObj.data[i].description}</p>
-        <p><strong>Designation:</strong> ${responseObj.data[i].designation}</p>
-        <p><strong>Park Directions:</strong> ${responseObj.data[i].directionsInfo}</p>
+        `<li>
+        <h3 data-nps-response-index="${i}" class="js-search-result-title search-result-title">${STORE.npsParksResponse.data[i].fullName}</h3>
+        <section id="js-park-planner-container" class="park-planner-container">
+          <p id="js-park-state-text"><strong>State(s):</strong> ${STORE.npsParksResponse.data[i].states}</p>
+          <p id="js-park-description-text"><strong>Description:</strong> ${STORE.npsParksResponse.data[i].description}</p>
+        </section>
         </li>`
       );
     }
     $('#js-search-results').removeClass('hidden');
 }
 
-function renderModal(parkFullName) {
-  // this is the master function for the Modal screen. 
-  $('#js-nps-modal-park-card-container, #js-weather-modal-card-container').empty(); // Is this needed ...? 
-  $('#js-nps-modal-park-card-container, #js-weather-modal-card-container').removeClass('hidden');
-  // renderForecastCard();
-  // renderMoreParkInfoCard();
+// <img src="${STORE.npsParksResponse.data.images[0].url}" alt="a picture of the national park: ${STORE.npsParksResponse.data.fullName}">
+
+function renderParkPlanner() {
+  // This is the master function for the planner screen. 
+  $('#js-park-info-container').empty(); // Is this needed ...? 
+  $('#js-park-info-container').html(
+    `<div class="extended-nps-info-container>
+      <p><strong>State(s):</strong> ${STORE.selectedPark.data.states}</p>
+      <p><strong>Description:</strong> ${STORE.selectedPark.data.description}</p>
+      <p><strong>Designation:</strong> ${STORE.selectedPark.data.designation}</p>
+      <p><strong>General Climate:</strong> ${STORE.selectedPark.data.weatherInfo}</p>
+      <p><strong>Directions:</strong> ${STORE.selectedPark.data.directionsInfo} <a href="${STORE.selectedPark.data.directionsUrl}">Find your way there!</a></p>
+      <p><strong>Website:</strong> <a href="${STORE.selectedPark.data.url}">Learn more about the park.</a></p>
+    </div>
+
+    <div class="forecast-container">
+      
+    </div>`
+  ); 
 }
 
-function renderForecastCard(responseObj) {
-  // called from renderModal
-  // look at Apple weather app. Simple.
-}
+// function renderForecast(responseObj) {
+//   // called from renderModal
+//   // look at Apple weather app. Simple.
+// }
 
-function renderMoreParkInfoCard() {
-  // called from renderModal
-  // this function just pulls more info from NPS's response, like hiking and camping info. Or it makes another more if needed, for a diff. endpoint.
-  $('#js-nps-modal-park-card-container').html(
-    ``
-  );
+// function renderMoreParkInfo() {
+//   // called from renderModal
+//   // this function just pulls more info from NPS's response, like hiking and camping info. Or it makes another more if needed, for a diff. endpoint.
+//   $('#js-nps-modal-park-card-container').html(
+//     ``
+//   );
   // Name
   // Image
   // description 
   // camping info (if any) (new call)
   // visitor’s center (new call)
   // directions info linked to directions url.
-}
 
 // ========= DOCUMENT READY ===========
 $(watchSearchForm);

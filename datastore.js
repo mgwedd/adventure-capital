@@ -5,4 +5,5 @@ const STORE = {
     accuLocationResponse: {}, 
     accuForecastResponse: {}, 
     selectedPark: {},
+    
 }
