@@ -1,5 +1,10 @@
 'use strict';
-// =============================================================
+const STORE = {
+  npsParksResponse: {}, 
+  accuLocationResponse: {}, 
+  accuForecastResponse: {}, 
+  selectedPark: {},   
+}
 // ================ SEARCH LISTENERS & HANDLERS ================
 function watchSearchForm() {
   $('form').submit(event => {
@@ -28,14 +33,12 @@ function watchSearchResults() {
     getAccuweatherLocation(STORE.selectedPark.latLong);
   });
 }
-// ================================================================
 // ======================= QUERY FORMATTING =======================
 function formatQueryParams(params) {
   const queryItems = Object.keys(params)
     .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
   return queryItems.join('&');
 }
-// ==============================================================
 // ======================== NPS API CALLS ========================
 async function getParks(searchInput, maxResults) {
   const npsSearchURL = 'https://developer.nps.gov/api/v1/parks?';
@@ -61,7 +64,6 @@ async function getParks(searchInput, maxResults) {
     }
 }
 
-// ===============================================================
 // ================ ACCUWEATHER LOCATION API CALL ================
 async function getAccuweatherLocation(parkCoordinates) {
   const LocationSearchURL = 'http://dataservice.accuweather.com/locations/v1/cities/geoposition/search?';
@@ -87,7 +89,6 @@ async function getAccuweatherLocation(parkCoordinates) {
     $('#js-error-message').text(`Uh ho... We couldn't complete your request. Here's why: ${error.message}`);
   }
 }
-// ===============================================================
 // ================ ACCUWEATHER FORECAST API CALL ================
 async function getForecast(locationKey) {
   const forecastSearchURL = 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/';
@@ -99,13 +100,12 @@ async function getForecast(locationKey) {
       throw new Error(forecastResponse.statusText);
     }
     STORE.accuForecastResponse = await forecastResponse.json();;
-    renderModal();
+    renderParkPlanner();
     console.log('Here\'s the response from AccuWeather\'s Forecast API: ', STORE.accuForecastResponse);
   } catch(error) {
     $('#js-error-message').text(`Uh ho... We couldn't complete your request. Here's why: ${error.message}`);
   }
 }
-// ====================================================
 // ======== DISPLAY RESULTS (ALL APIS) ================
 function renderParkSearchResults(maxResults) {
     $('#js-search-results-list').empty();
@@ -124,12 +124,14 @@ function renderParkSearchResults(maxResults) {
     }
     $('#js-search-results').removeClass('hidden');
 }
-
 // <img src="${STORE.npsParksResponse.data.images[0].url}" alt="a picture of the national park: ${STORE.npsParksResponse.data.fullName}">
-
 function renderParkPlanner() {
-  // This is the master function for the planner screen. 
-  $('#js-park-info-container').empty(); // Is this needed ...? 
+  const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const firstForecastDayNum = new Date(STORE.accuForecastResponse.DailyForecasts[0].Date).getDay() -1; // 0-indexed for weekdays arr
+  const secondForecastDayNum = new Date(STORE.accuForecastResponse.DailyForecasts[1].Date).getDay() -1;
+  const thirdForecastDayNum = new Date(STORE.accuForecastResponse.DailyForecasts[2].Date).getDay() -1;
+  const fourthForecastDayNum = new Date(STORE.accuForecastResponse.DailyForecasts[3].Date).getDay() -1;
+  const fifthForecastDayNum = new Date(STORE.accuForecastResponse.DailyForecasts[4].Date).getDay() -1;
   $('#js-park-info-container').html(
     `<div class="extended-nps-info-container>
       <p><strong>State(s):</strong> ${STORE.selectedPark.data.states}</p>
@@ -139,31 +141,40 @@ function renderParkPlanner() {
       <p><strong>Directions:</strong> ${STORE.selectedPark.data.directionsInfo} <a href="${STORE.selectedPark.data.directionsUrl}">Find your way there!</a></p>
       <p><strong>Website:</strong> <a href="${STORE.selectedPark.data.url}">Learn more about the park.</a></p>
     </div>
-
     <div class="forecast-container">
-      
+      <div class="day-container">
+        <span class="forecast-day">${weekdays[firstForecastDayNum]}</span>
+        <span class="forecast-phrase">${STORE.accuForecastResponse.DailyForecasts[0].Day.IconPhrase}</span>
+        <span class="forecast-min">Low: ${STORE.accuForecastResponse.DailyForecasts[0].Temperature.Minimum.Value}&#8457;</span>
+        <span class="forecast-max">High: ${STORE.accuForecastResponse.DailyForecasts[0].Temperature.Maximum.Value}&#8457;</span>
+      </div>
+      <div class="day-container">
+        <span class="forecast-day">${weekdays[secondForecastDayNum]}</span>
+        <span class="forecast-phrase">${STORE.accuForecastResponse.DailyForecasts[1].Day.IconPhrase}</span>
+        <span class="forecast-min">Low: ${STORE.accuForecastResponse.DailyForecasts[1].Temperature.Minimum.Value}&#8457;</span>
+        <span class="forecast-max">High: ${STORE.accuForecastResponse.DailyForecasts[1].Temperature.Maximum.Value}&#8457;</span>
+      </div>
+      <div class="day-container">
+        <span class="forecast-day">${weekdays[thirdForecastDayNum]}</span>
+        <span class="forecast-phrase">${STORE.accuForecastResponse.DailyForecasts[2].Day.IconPhrase}</span>
+        <span class="forecast-min">Low: ${STORE.accuForecastResponse.DailyForecasts[2].Temperature.Minimum.Value}&#8457;</span>
+        <span class="forecast-max">High: ${STORE.accuForecastResponse.DailyForecasts[2].Temperature.Maximum.Value}&#8457;</span>
+      </div>
+      <div class="day-container">
+        <span class="forecast-day">${weekdays[fourthForecastDayNum]}</span>
+        <span class="forecast-phrase">${STORE.accuForecastResponse.DailyForecasts[3].Day.IconPhrase}</span>
+        <span class="forecast-min">Low: ${STORE.accuForecastResponse.DailyForecasts[3].Temperature.Minimum.Value}&#8457;</span>
+        <span class="forecast-max">High: ${STORE.accuForecastResponse.DailyForecasts[3].Temperature.Maximum.Value}&#8457;</span>
+      </div>
+      <div class="day-container">
+        <span class="forecast-day">${weekdays[fifthForecastDayNum]}</span>
+        <span class="forecast-phrase">${STORE.accuForecastResponse.DailyForecasts[4].Day.IconPhrase}</span>
+        <span class="forecast-min">Low: ${STORE.accuForecastResponse.DailyForecasts[4].Temperature.Minimum.Value}&#8457;</span>
+        <span class="forecast-max">High: ${STORE.accuForecastResponse.DailyForecasts[4].Temperature.Maximum.Value}&#8457;</span>
+      </div>
     </div>`
   ); 
 }
 
-// function renderForecast(responseObj) {
-//   // called from renderModal
-//   // look at Apple weather app. Simple.
-// }
-
-// function renderMoreParkInfo() {
-//   // called from renderModal
-//   // this function just pulls more info from NPS's response, like hiking and camping info. Or it makes another more if needed, for a diff. endpoint.
-//   $('#js-nps-modal-park-card-container').html(
-//     ``
-//   );
-  // Name
-  // Image
-  // description 
-  // camping info (if any) (new call)
-  // visitor’s center (new call)
-  // directions info linked to directions url.
-
 // ========= DOCUMENT READY ===========
 $(watchSearchForm);
-// ====================================
