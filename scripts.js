@@ -31,10 +31,9 @@ function watchSearchResults() {
     const selectedParkID = parseInt($(this).attr("data-park-index")); // This is the location in the responseObj of the obj containing the selected park.
     STORE.selectedPark = STORE.npsParksResponse.data[selectedParkID];
     try {
-      getAccuLocation();
-      getAccuForecast();
-      renderParkPlanner();
-    } catch(error) {
+    console.log('current state in watchSearchResults: ', STORE)
+    getAccuLocation();
+        } catch(error) {
       alert(`Darn. The interweb broke, and we couldn't get more info about this park right now :(. Please choose another park.`);
       console.log(`Here's what went wrong: ${error.message}`);
     }
@@ -63,6 +62,7 @@ async function getParks(searchInput, maxResults) {
       throw new Error(npsResponse.statusText);
     }
     STORE.npsParksResponse = await npsResponse.json();
+    console.log('current state in getParks: ', STORE)
     renderParkSearchResults(maxResults);
     watchSearchResults();
     console.log('Here\'s the response from NPS: ', STORE.npsParksResponse);
@@ -72,14 +72,11 @@ async function getParks(searchInput, maxResults) {
 }
 // ================ ACCUWEATHER LOCATION API CALL ================
 async function getAccuLocation() {
-  const LocationSearchURL = 'http://dataservice.accuweather.com/locations/v1/cities/geoposition/search?';
-  const locationAPIKey = '4necePoPQpKdSd2EbjAHXIotYDIna8vN';
-  const formattedParkCoordinates = STORE.selectedPark.latLong.replace(/lat:|\slong:/, ''); 
-  const params = {
-    apiKey: locationAPIKey, 
-    q: formattedParkCoordinates
-  };
-  const request = new Request(LocationSearchURL + formatQueryParams(params));
+  const locationSearchURL = 'https://dataservice.accuweather.com/locations/v1/cities/geoposition/search?';
+  const accuAPIKey = '4necePoPQpKdSd2EbjAHXIotYDIna8vN';
+  const parkLatLon = STORE.selectedPark.latLong.replace(/[lat:long\s]/g, ''); 
+  const requestURL = locationSearchURL + 'apikey=' + accuAPIKey + '&q=' + parkLatLon; 
+  const request = new Request(requestURL);
   const headers = new Headers({
       'mode': 'no-cors',
       'Accept': '*/*', 
@@ -93,38 +90,37 @@ async function getAccuLocation() {
     if (!locationResponse.ok) {
       throw new Error(locationResponse.statusText);
     }
-    // pass the location key Accuweather returns for the park's geoposition into getForeceast().
-    STORE.accuLocationResponse = await locationResponse.json();
-    getForecast(STORE.accuLocationResponse.Key);
+    STORE.accuLocationResponse = await locationResponse.json(); // Forecast API needs Accuweather's in-house location code.
+    getAccuForecast();
     console.log('Here\'s the response from AccuWeather\'s Location API: ', STORE.accuLocationResponse);
+    console.log('current state in getAccuLocaton: ', STORE)
   } catch(error) {
     $('#js-error-message').text(`Uh ho... We couldn't complete your request to Accuweather's Location API. Here's why: ${error.message}`);
   }
 }
 // ================ ACCUWEATHER FORECAST API CALL ================
 async function getAccuForecast() {
-  const forecastSearchURL = 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/';
-  const forecastApiKey = '4necePoPQpKdSd2EbjAHXIotYDIna8vN';
-  const forecastUrl = forecastSearchURL + STORE.accuLocationResponse.Key + '?' + 'apiKey=' + forecastApiKey;
+  const forecastSearchURL = 'https://dataservice.accuweather.com/forecasts/v1/daily/5day/';
+  const accuAPIKey = '4necePoPQpKdSd2EbjAHXIotYDIna8vN';
+  const forecastUrl = forecastSearchURL + STORE.accuLocationResponse.Key + '?apikey=' + accuAPIKey;
 
   const request = new Request(forecastUrl);
   const headers = new Headers({
-      'mode': 'no-cors',
       'Accept': '*/*', 
       'Accept-Encoding': 'gzip', 
       'Accept-Language': 'en-US', 
       'DNT': '1', 
       'Host': 'dataservice.accuweather.com', 
     });
-
   try {
     const forecastResponse = await fetch(request, headers);
     if (!forecastResponse.ok) {
       throw new Error(forecastResponse.statusText);
     }
-    STORE.accuForecastResponse = await forecastResponse.json();;
+    STORE.accuForecastResponse = await forecastResponse.json();
     renderParkPlanner();
     console.log('Here\'s the response from AccuWeather\'s Forecast API: ', STORE.accuForecastResponse);
+    console.log('current state in getAccuForecast: ', STORE)
   } catch(error) {
     $('#js-error-message').text(`Uh ho... We couldn't complete your request to Accuweather's 5 Forecast API. Here's why: ${error.message}`);
   }
@@ -149,12 +145,14 @@ function renderParkSearchResults(maxResults) {
 }
 // <img src="${STORE.npsParksResponse.data.images[0].url}" alt="a picture of the national park: ${STORE.npsParksResponse.data.fullName}">
 function renderParkPlanner() {
+  console.log('current state in renderParkPlanner, right before the date time selection: ', STORE)
+  const dailyForecastsArr = STORE.accuForecastResponse.DailyForecasts;
   const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const firstForecastDayNum = new Date(STORE.accuForecastResponse.DailyForecasts[0].Date).getDay() -1; // 0-indexed for weekdays arr
-  const secondForecastDayNum = new Date(STORE.accuForecastResponse.DailyForecasts[1].Date).getDay() -1;
-  const thirdForecastDayNum = new Date(STORE.accuForecastResponse.DailyForecasts[2].Date).getDay() -1;
-  const fourthForecastDayNum = new Date(STORE.accuForecastResponse.DailyForecasts[3].Date).getDay() -1;
-  const fifthForecastDayNum = new Date(STORE.accuForecastResponse.DailyForecasts[4].Date).getDay() -1;
+  const firstForecastDayNum = new Date(dailyForecastsArr[0].Date).getDay() -1; // 0-indexed for weekdays arr
+  const secondForecastDayNum = new Date(dailyForecastsArr[1].Date).getDay() -1;
+  const thirdForecastDayNum = new Date(dailyForecastsArr[2].Date).getDay() -1;
+  const fourthForecastDayNum = new Date(dailyForecastsArr[3].Date).getDay() -1;
+  const fifthForecastDayNum = new Date(dailyForecastsArr[4].Date).getDay() -1;
   $('#js-park-planner-container').empty();
   // UPGRADE: Put weather icons in those icon slots: https://developer.accuweather.com/weather-icons (https://amancingh.com/show-weather-with-js-and-weather-api/)
   $('#js-park-info-container').html(
@@ -169,37 +167,36 @@ function renderParkPlanner() {
     <div class="forecast-container">
       <div class="day-container">
         <span class="forecast-day">${weekdays[firstForecastDayNum]}</span>
-        <span class="forecast-phrase">${STORE.accuForecastResponse.DailyForecasts[0].Day.IconPhrase}</span>
-        <span class="forecast-min">Low: ${STORE.accuForecastResponse.DailyForecasts[0].Temperature.Minimum.Value}&#8457;</span>
-        <span class="forecast-max">High: ${STORE.accuForecastResponse.DailyForecasts[0].Temperature.Maximum.Value}&#8457;</span>
+        <span class="forecast-phrase">${dailyForecastsArr[0].Day.IconPhrase}</span>
+        <span class="forecast-min">Low: ${dailyForecastsArr[0].Temperature.Minimum.Value}&#8457;</span>
+        <span class="forecast-max">High: ${dailyForecastsArr[0].Temperature.Maximum.Value}&#8457;</span>
       </div>
       <div class="day-container">
         <span class="forecast-day">${weekdays[secondForecastDayNum]}</span>
-        <span class="forecast-phrase">${STORE.accuForecastResponse.DailyForecasts[1].Day.IconPhrase}</span>
-        <span class="forecast-min">Low: ${STORE.accuForecastResponse.DailyForecasts[1].Temperature.Minimum.Value}&#8457;</span>
-        <span class="forecast-max">High: ${STORE.accuForecastResponse.DailyForecasts[1].Temperature.Maximum.Value}&#8457;</span>
+        <span class="forecast-phrase">${dailyForecastsArr[1].Day.IconPhrase}</span>
+        <span class="forecast-min">Low: ${dailyForecastsArr[1].Temperature.Minimum.Value}&#8457;</span>
+        <span class="forecast-max">High: ${dailyForecastsArr[1].Temperature.Maximum.Value}&#8457;</span>
       </div>
       <div class="day-container">
         <span class="forecast-day">${weekdays[thirdForecastDayNum]}</span>
-        <span class="forecast-phrase">${STORE.accuForecastResponse.DailyForecasts[2].Day.IconPhrase}</span>
-        <span class="forecast-min">Low: ${STORE.accuForecastResponse.DailyForecasts[2].Temperature.Minimum.Value}&#8457;</span>
-        <span class="forecast-max">High: ${STORE.accuForecastResponse.DailyForecasts[2].Temperature.Maximum.Value}&#8457;</span>
+        <span class="forecast-phrase">${dailyForecastsArr[2].Day.IconPhrase}</span>
+        <span class="forecast-min">Low: ${dailyForecastsArr[2].Temperature.Minimum.Value}&#8457;</span>
+        <span class="forecast-max">High: ${dailyForecastsArr[2].Temperature.Maximum.Value}&#8457;</span>
       </div>
       <div class="day-container">
         <span class="forecast-day">${weekdays[fourthForecastDayNum]}</span>
-        <span class="forecast-phrase">${STORE.accuForecastResponse.DailyForecasts[3].Day.IconPhrase}</span>
-        <span class="forecast-min">Low: ${STORE.accuForecastResponse.DailyForecasts[3].Temperature.Minimum.Value}&#8457;</span>
-        <span class="forecast-max">High: ${STORE.accuForecastResponse.DailyForecasts[3].Temperature.Maximum.Value}&#8457;</span>
+        <span class="forecast-phrase">${dailyForecastsArr[3].Day.IconPhrase}</span>
+        <span class="forecast-min">Low: ${dailyForecastsArr[3].Temperature.Minimum.Value}&#8457;</span>
+        <span class="forecast-max">High: ${dailyForecastsArr[3].Temperature.Maximum.Value}&#8457;</span>
       </div>
       <div class="day-container">
         <span class="forecast-day">${weekdays[fifthForecastDayNum]}</span>
-        <span class="forecast-phrase">${STORE.accuForecastResponse.DailyForecasts[4].Day.IconPhrase}</span>
-        <span class="forecast-min">Low: ${STORE.accuForecastResponse.DailyForecasts[4].Temperature.Minimum.Value}&#8457;</span>
-        <span class="forecast-max">High: ${STORE.accuForecastResponse.DailyForecasts[4].Temperature.Maximum.Value}&#8457;</span>
+        <span class="forecast-phrase">${dailyForecastsArr[4].Day.IconPhrase}</span>
+        <span class="forecast-min">Low: ${dailyForecastsArr[4].Temperature.Minimum.Value}&#8457;</span>
+        <span class="forecast-max">High: ${dailyForecastsArr[4].Temperature.Maximum.Value}&#8457;</span>
       </div>
     </div>`
   ); 
 }
-
 // ========= DOCUMENT READY ===========
 $(watchSearchForm);
