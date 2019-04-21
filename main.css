@@ -56,7 +56,7 @@ li {
 }
 
 li, img {
-  max-width: 500px;
+  max-width: 750px;
 }
 
 fieldset {
@@ -87,7 +87,7 @@ h1 {
 }
 
 .container {
-  max-width: 600px;
+  max-width: 800px;
   height: 100%;
   margin: 0 auto;
   display: flex;
@@ -104,13 +104,29 @@ h1 {
 
 .title, label {
   color: #2E4600;
+  text-align: center;
 }
 
 .error-message {
     color: red;
-    font-size: 16px;
+    font-size: 20px;
 }
 
 .hidden {
   display: none;
 }
+
+#selected-park-li {
+  height: 750px;
+  width: 750px;
+    /* for dev ease */
+  background-color: gray;  
+}
+
+/* To solve the size issue when the LI is converted to a planner window. 
+1) add some unique id to the  containing LI  
+2) set size and height around 800px or something responsive
+3) set some focuser such that the window autoscrolls so the park title is at the top fof the screen, and the 
+planner window takes up all of the screen.
+4) add some transition effects, based on collapsible card style
+5) consider adding a background color to align it logically with the brown title. */
