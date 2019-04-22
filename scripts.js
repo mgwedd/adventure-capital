@@ -35,12 +35,12 @@ function watchSearchResults() {
       STORE.$this = $(this);
       // Check whether the selected park has geocordinates. 
       // Some don't because they're too spread out to have a central point of georeference.
-      // If the park does have geocordinates, then fetch a weather forecast for it because you can.
+      // If the park does have geocordinates, then fetch a weather forecast for it (because you can). That chain calls the nps + weather renderer
       if (STORE.selectedPark.latLong !== '') {
         getAccuLocation();
       // Else, the park doesn't have geocoordinates, so we can't get weather, so just display more info from NPS.
       } else {
-        renderParkPlannerNoWeather()
+        renderParkPlannerNoWeather();
       }
     } catch(error) {
       alert(`Darn. The interweb broke behind the scenes, and we couldn't get more info about that park right now :(. Please choose another park.`);
