@@ -29,22 +29,21 @@ function watchSearchResults() {
   // No arrow function used here because of incorrect binding with $this.
   $('#js-search-results-list').on('click', '#js-search-result-title', function(event) {
     event.preventDefault();
-    const selectedParkID = parseInt($(this).attr("data-park-index")); // This is the location in the responseObj of the obj containing the selected park.
-    STORE.selectedPark = STORE.npsParksResponse.data[selectedParkID];
-
-    // NEW BRANCHING LOGIC FOR DOUBLE LISTENER PROBLEM: 
-    // IF PARK IS SELECTED (STORE.selectedPark !== {}) {
-      //then then we know the parkplanner is expanded, so we should collapse it.
-    // } else {
-    //   // otherwise, we know that 
-    // }
-    try {
-    getAccuLocation();
-    STORE.$this = $(this);
-    console.log('current state in watchSearchResults: ', STORE)
-        } catch(error) {
-      alert(`Darn. The interweb broke behind the scenes, and we couldn't get more info about that park right now :(. Please choose another park.`);
-      console.log(`Here's what went wrong: ${error.message}`);
+    if (STORE.selectedPark !== {}) {
+      // If this block executes, then we know that know park has been selected.
+      try {
+        const selectedParkID = parseInt($(this).attr("data-park-index")); // This is the location in the responseObj of the obj containing the selected park.
+        STORE.selectedPark = STORE.npsParksResponse.data[selectedParkID];
+        getAccuLocation();
+        STORE.$this = $(this);
+      } catch(error) {
+        alert(`Darn. The interweb broke behind the scenes, and we couldn't get more info about that park right now :(. Please choose another park.`);
+        console.log(`Here's what went wrong: ${error.message}`);
+      }
+    } else {
+      // If this else executes, we know that a park planner had been opened, so it's time to collapse it.
+      $('#js-park-planner-collapsible-container').toggle( 'slow', function() {});
+      STORE.selectedPark = {};
     }
   });
 }
@@ -209,7 +208,7 @@ function renderParkPlanner() {
       </div>
     </div>`
   ); 
-  parkPlannerToggle();
+  // parkPlannerToggle();
 }
 // ======== PLANNER PLANNER TOGGLE ================
 // function parkPlannerToggle() {
