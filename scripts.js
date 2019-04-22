@@ -29,21 +29,22 @@ function watchSearchResults() {
   // No arrow function used here because of incorrect binding with $this.
   $('#js-search-results-list').on('click', '#js-search-result-title', function(event) {
     event.preventDefault();
-    if (STORE.selectedPark !== {}) {
-      // If this block executes, then we know that know park has been selected.
-      try {
-        const selectedParkID = parseInt($(this).attr("data-park-index")); // This is the location in the responseObj of the obj containing the selected park.
-        STORE.selectedPark = STORE.npsParksResponse.data[selectedParkID];
+    try {
+      const selectedParkID = parseInt($(this).attr("data-park-index")); // This is the location in the responseObj of the obj containing the selected park.
+      STORE.selectedPark = STORE.npsParksResponse.data[selectedParkID];
+      STORE.$this = $(this);
+      // Check whether the selected park has geocordinates. 
+      // Some don't because they're too spread out to have a central point of georeference.
+      // If the park does have geocordinates, then fetch a weather forecast for it because you can.
+      if (STORE.selectedPark.latLong !== '') {
         getAccuLocation();
-        STORE.$this = $(this);
-      } catch(error) {
-        alert(`Darn. The interweb broke behind the scenes, and we couldn't get more info about that park right now :(. Please choose another park.`);
-        console.log(`Here's what went wrong: ${error.message}`);
+      // Else, the park doesn't have geocoordinates, so we can't get weather, so just display more info from NPS.
+      } else {
+        renderParkPlannerNoWeather()
       }
-    } else {
-      // If this else executes, we know that a park planner had been opened, so it's time to collapse it.
-      $('#js-park-planner-collapsible-container').toggle( 'slow', function() {});
-      STORE.selectedPark = {};
+    } catch(error) {
+      alert(`Darn. The interweb broke behind the scenes, and we couldn't get more info about that park right now :(. Please choose another park.`);
+      console.log(`Here's what went wrong: ${error.message}`);
     }
   });
 }
@@ -82,8 +83,8 @@ async function getParks(searchInput, maxResults) {
 async function getAccuLocation() {
   const locationSearchURL = 'https://dataservice.accuweather.com/locations/v1/cities/geoposition/search?';
   const accuAPIKey = '4necePoPQpKdSd2EbjAHXIotYDIna8vN';
-  const parkLatLon = STORE.selectedPark.latLong.replace(/[lat:long\s]/g, ''); 
-  const requestURL = locationSearchURL + 'apikey=' + accuAPIKey + '&q=' + parkLatLon; 
+  const parkLatLong = STORE.selectedPark.latLong.replace(/[lat:long\s]/g, ''); 
+  const requestURL = locationSearchURL + 'apikey=' + accuAPIKey + '&q=' + parkLatLong; 
   const request = new Request(requestURL);
   const headers = new Headers({
       'mode': 'no-cors',
@@ -126,7 +127,7 @@ async function getAccuForecast() {
       throw new Error(forecastResponse.statusText);
     }
     STORE.accuForecastResponse = await forecastResponse.json();
-    renderParkPlanner();
+    renderParkPlannerWithForecast();
     console.log('Here\'s the response from AccuWeather\'s Forecast API: ', STORE.accuForecastResponse);
     console.log('current state in getAccuForecast: ', STORE)
   } catch(error) {
@@ -153,16 +154,16 @@ function renderParkSearchResults(maxResults) {
     $('#js-search-results').removeClass('hidden');
 }
 // <img src="${STORE.npsParksResponse.data[i].images[0].url}" alt="a picture of the national park: ${STORE.npsParksResponse.data[i].fullName}">
-// ======== DISPLAY PARK PLANNER ================
-function renderParkPlanner() {
+// ======== DISPLAY PARK PLANNER (WITH AND WITHOUT WEATHER FORECAST(No Geocordinates edge case)) ================
+function renderParkPlannerWithForecast() {
   console.log('current state in renderParkPlanner, right before the date time selection: ', STORE)
   const dailyForecastsArr = STORE.accuForecastResponse.DailyForecasts;
-  const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const firstForecastDayNum = new Date(dailyForecastsArr[0].Date).getDay() -1; // 0-indexed for weekdays arr
-  const secondForecastDayNum = new Date(dailyForecastsArr[1].Date).getDay() -1; // BUG: This needs fixing! first day is always undefined.
-  const thirdForecastDayNum = new Date(dailyForecastsArr[2].Date).getDay() -1;
-  const fourthForecastDayNum = new Date(dailyForecastsArr[3].Date).getDay() -1;
-  const fifthForecastDayNum = new Date(dailyForecastsArr[4].Date).getDay() -1;
+  const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const firstForecastDayNum = new Date(dailyForecastsArr[0].Date).getDay(); // 0-indexed for weekdays arr
+  const secondForecastDayNum = new Date(dailyForecastsArr[1].Date).getDay(); // BUG: This needs fixing! first day is always undefined.
+  const thirdForecastDayNum = new Date(dailyForecastsArr[2].Date).getDay();
+  const fourthForecastDayNum = new Date(dailyForecastsArr[3].Date).getDay();
+  const fifthForecastDayNum = new Date(dailyForecastsArr[4].Date).getDay();
   // UPGRADE: Put weather icons in those icon slots: https://developer.accuweather.com/weather-icons (https://amancingh.com/show-weather-with-js-and-weather-api/)
   $(STORE.$this).parent().attr('id', 'selected-park-li');
   $(STORE.$this).next().html(
@@ -208,20 +209,22 @@ function renderParkPlanner() {
       </div>
     </div>`
   ); 
-  // parkPlannerToggle();
 }
-// ======== PLANNER PLANNER TOGGLE ================
-// function parkPlannerToggle() {
-//   $(STORE.$this).click(function(event) {
-//     // BUG: The target for the line below needs to be N after $this... currently, it's a global selecter!!That's why it doesn't work.
-//     $('#js-park-planner-collapsible-container').toggle( 'slow', function() {});
-//     // FIGURED IT OUT: THe problem is that there are two things listening to events that bubble up to the UL parent (watch search results. 
-//     // So what's happening is that that listener is firing first and rerendering the "renderParkPlanner" screen over top of it, rather than closing the 
-//     // park planner / whatever else is described in THIS event listener.
-//     // So question: How do you deal with two listeners handling the theodo DOM branch? Can you do conditional logic for within one 
-//     // listener, or can you isntead disable one after it fires, making way for other things listening to the same DOM branch (like this function)?
-//   });
-// }
-    // $(STORE.$this).parent().attr('id', '');
+function renderParkPlannerNoWeather() {
+  console.log('current state in renderParkPlanner, right before displaying more info: ', STORE)
+  $(STORE.$this).parent().attr('id', 'selected-park-li');
+  $(STORE.$this).next().html(
+    `<div class="extended-nps-container">
+      <p><strong>State(s):</strong> ${STORE.selectedPark.states}</p>
+      <p><strong>Description:</strong> ${STORE.selectedPark.description}</p>
+      <p><strong>Designation:</strong> ${STORE.selectedPark.designation}</p>
+      <p><strong>General Climate:</strong> ${STORE.selectedPark.weatherInfo}</p>
+      <p><strong>Directions:</strong> ${STORE.selectedPark.directionsInfo}<br><br><a href="${STORE.selectedPark.directionsUrl}" target="_blank">Directions to the Park</a><br><br></p>
+      <p><strong>Website: </strong><a href="${STORE.selectedPark.url}" target="_blank">${STORE.selectedPark.fullName}</a></p>
+    </div>`
+  ); 
+}
 // ========= ON DOC READY ===========
 $(watchSearchForm);
+// FORECAST STYLE CHANGE: Show the weather like google's weather forecast, with each day formatted as day on top of weather icon on top of min | max. 
+// Then present each day's weather in a row of vertically aligned weather day cols. 
