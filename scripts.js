@@ -161,6 +161,8 @@ function renderParkPlanner() {
   $(STORE.$this).parent().attr('id', 'selected-park-li');
   $(STORE.$this).next().html(
     `<div class="extended-nps-container">
+      <p><strong>State(s):</strong> ${STORE.selectedPark.states}</p>
+      <p><strong>Description:</strong> ${STORE.selectedPark.description}</p>
       <p><strong>Designation:</strong> ${STORE.selectedPark.designation}</p>
       <p><strong>General Climate:</strong> ${STORE.selectedPark.weatherInfo}</p>
       <p><strong>Directions:</strong> ${STORE.selectedPark.directionsInfo}<br><br><a href="${STORE.selectedPark.directionsUrl}" target="_blank">Directions to the Park</a><br><br></p>
@@ -205,7 +207,8 @@ function renderParkPlanner() {
 // ======== PLANNER PLANNER TOGGLE ================
 function parkPlannerToggle() {
   $(STORE.$this).click(function(event) {
-    $('#js-park-planner-collapsible-container').slideToggle( 'slow', function() {});
+    // BUG: The target for the line below needs to be N after $this... currently, it's a global selecter!!That's why it doesn't work.
+    $('#js-park-planner-collapsible-container').toggle( 'slow', function() {});
   });
 }
     // $(STORE.$this).parent().attr('id', '');
