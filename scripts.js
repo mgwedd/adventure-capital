@@ -31,6 +31,13 @@ function watchSearchResults() {
     event.preventDefault();
     const selectedParkID = parseInt($(this).attr("data-park-index")); // This is the location in the responseObj of the obj containing the selected park.
     STORE.selectedPark = STORE.npsParksResponse.data[selectedParkID];
+
+    // NEW BRANCHING LOGIC FOR DOUBLE LISTENER PROBLEM: 
+    // IF PARK IS SELECTED (STORE.selectedPark !== {}) {
+      //then then we know the parkplanner is expanded, so we should collapse it.
+    // } else {
+    //   // otherwise, we know that 
+    // }
     try {
     getAccuLocation();
     STORE.$this = $(this);
@@ -205,12 +212,17 @@ function renderParkPlanner() {
   parkPlannerToggle();
 }
 // ======== PLANNER PLANNER TOGGLE ================
-function parkPlannerToggle() {
-  $(STORE.$this).click(function(event) {
-    // BUG: The target for the line below needs to be N after $this... currently, it's a global selecter!!That's why it doesn't work.
-    $('#js-park-planner-collapsible-container').toggle( 'slow', function() {});
-  });
-}
+// function parkPlannerToggle() {
+//   $(STORE.$this).click(function(event) {
+//     // BUG: The target for the line below needs to be N after $this... currently, it's a global selecter!!That's why it doesn't work.
+//     $('#js-park-planner-collapsible-container').toggle( 'slow', function() {});
+//     // FIGURED IT OUT: THe problem is that there are two things listening to events that bubble up to the UL parent (watch search results. 
+//     // So what's happening is that that listener is firing first and rerendering the "renderParkPlanner" screen over top of it, rather than closing the 
+//     // park planner / whatever else is described in THIS event listener.
+//     // So question: How do you deal with two listeners handling the theodo DOM branch? Can you do conditional logic for within one 
+//     // listener, or can you isntead disable one after it fires, making way for other things listening to the same DOM branch (like this function)?
+//   });
+// }
     // $(STORE.$this).parent().attr('id', '');
 // ========= ON DOC READY ===========
 $(watchSearchForm);
