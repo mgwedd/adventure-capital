@@ -6,5 +6,6 @@
 Click on a screenshot to check out the live app.
 
 [<img src="assets/screenshots/adventure-home-screenshot.png">](https://mgwedd.github.io/adventure-capital/)
-[<img src="assets/screenshots/adventure-search-screenshot.png">](https://mgwedd.github.io/adventure-capital/)
+
+
 [<img src="assets/screenshots/adventure-planner-screenshot.png">](https://mgwedd.github.io/adventure-capital/)
