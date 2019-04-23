@@ -33,8 +33,7 @@ function watchSearchResults() {
       const selectedParkID = parseInt($(this).attr("data-park-index")); // This is the location in the responseObj of the obj containing the selected park.
       STORE.selectedPark = STORE.npsParksResponse.data[selectedParkID];
       STORE.$this = $(this);
-      // Check whether the selected park has geocordinates. 
-      // Some don't because they're too spread out to have a central point of georeference.
+      // Check whether the selected park has geocordinates. Some don't because they're too spread out to have a central point of georeference.
       // If the park does have geocordinates, then fetch a weather forecast for it (because you can). That chain calls the nps + weather renderer
       if (STORE.selectedPark.latLong !== '') {
         getAccuLocation();
@@ -99,7 +98,7 @@ async function getAccuLocation() {
     if (!locationResponse.ok) {
       throw new Error(locationResponse.statusText);
     }
-    STORE.accuLocationResponse = await locationResponse.json(); // Forecast API needs Accuweather's in-house location code.
+    STORE.accuLocationResponse = await locationResponse.json(); // Forecast API needs Accuweather's in-house location codes.
     getAccuForecast();
     console.log('Here\'s the response from AccuWeather\'s Location API: ', STORE.accuLocationResponse);
     console.log('current state in getAccuLocaton: ', STORE)
@@ -154,8 +153,7 @@ function renderParkSearchResults(maxResults) {
     }
     $('#js-search-results').removeClass('hidden');
 }
-// <img src="${STORE.npsParksResponse.data[i].images[0].url}" alt="a picture of the national park: ${STORE.npsParksResponse.data[i].fullName}">
-// ======== DISPLAY PARK PLANNER (WITH AND WITHOUT WEATHER FORECAST(No Geocordinates edge case)) ================
+// ======== DISPLAY PARK PLANNER (WITH AND WITHOUT WEATHER FORECAST (No Geocordinates edge case)) ================
 function renderParkPlannerWithForecast() {
   console.log('current state in renderParkPlanner, right before the date time selection: ', STORE)
   const dailyForecastsArr = STORE.accuForecastResponse.DailyForecasts;
@@ -222,5 +220,3 @@ function renderParkPlannerNoWeather() {
 }
 // ========= ON DOC READY ===========
 $(watchSearchForm);
-// FORECAST STYLE CHANGE: Show the weather like google's weather forecast, with each day formatted as day on top of weather icon on top of min | max. 
-// Then present each day's weather in a row of vertically aligned weather day cols. 
