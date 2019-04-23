@@ -3,12 +3,8 @@
 
 **Technologies used**: HTML, CSS, Javascript, jQuery
 
-[<img src="https://imgur.com/a/8fg1bf9
-">](https://mgwedd.github.io/adventure-capital/)
+[<img src="https://imgur.com/a/8fg1bf9">](https://mgwedd.github.io/adventure-capital/)
 
-[<img src="https://imgur.com/TmPbEUZ
-">](https://mgwedd.github.io/adventure-capital/)
+[<img src="https://imgur.com/TmPbEUZ">](https://mgwedd.github.io/adventure-capital/)
 
-[<img src="https://imgur.com/e596kiC
-">](https://mgwedd.github.io/adventure-capital/)
-https://imgur.com/a/8fg1bf9
+[<img src="https://imgur.com/e596kiC">](https://mgwedd.github.io/adventure-capital/)
