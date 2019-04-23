@@ -1,3 +1,14 @@
-# Plan Your Next Vacation
-API exercise: allow users to search for national parks in one or more states. List results (can be limited by max length of results).
-# adventure-capital
+# Adventure Capital
+### A web app that enables users to search for National Parks by state(s), and then to see relevant planning info, such as weather forecasts and directions, immediately on a single card.
+
+**Technologies used**: HTML, CSS, Javascript, jQuery
+
+[<img src="https://imgur.com/a/8fg1bf9
+">](https://mgwedd.github.io/adventure-capital/)
+
+[<img src="https://imgur.com/TmPbEUZ
+">](https://mgwedd.github.io/adventure-capital/)
+
+[<img src="https://imgur.com/e596kiC
+">](https://mgwedd.github.io/adventure-capital/)
+https://imgur.com/a/8fg1bf9
