@@ -15,7 +15,6 @@ input[type="text"], input[type="number"] {
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
 }
 input[type="submit"] {
-  /* font-family: 'Open Sans', sans-serif; */
   background-color: #2E4600;
   border: none;
   color: white;
@@ -56,33 +55,16 @@ fieldset {
 h1 {
   font-size: 35px;
 }
-.error-message {
-    color: red;
-    font-size: 20px;
-}
-.hidden {
-  display: none;
-}
 .title, label {
   color: #2E4600;
   text-align: center;
 }
-.search-result-title {
-  background-color: #916023;
-  color: white;
-  padding: 14px 25px;
-  text-align: center; 
-  text-decoration: none;
-  display: inline-block;
-  border-radius: 5px;
-  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-  transition: 0.3s;
-  min-width: 100%;
+.error-message {
+  color: red;
+  font-size: 20px;
 }
-.search-result-title:hover {
-  background-color: #b7793b;
-  box-shadow: 0 10px 16px 0 rgba(0,0,0,0.2);
-  cursor: pointer;
+.hidden {
+  display: none;
 }
 .container {
   max-width: 800px;
@@ -98,48 +80,89 @@ h1 {
   flex-direction: column;
   align-items: center;
 }
+.search-result-title {
+  background-color: #916023;
+  color: white;
+  padding: 14px 25px;
+  text-align: center; 
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;
+  width: 100%;
+}
+.search-result-title:hover {
+  background-color: #b7793b;
+  box-shadow: 0 10px 16px 0 rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+.park-directions-button:link, .park-directions-button:visited {
+  display: block;
+  background-color: #2E4600;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;
+  padding: 14px 25px;
+  margin-top: 35px;
+  margin: 35px auto 35px auto;
+  max-width: 185px;
+  text-align: center;
+  font-size: 16px;
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+}
+.park-directions-button:hover, .park-directions-button:active {
+  box-shadow: 0 10px 16px 0 rgba(0,0,0,0.2);
+  background-color: #426600;
+  transition: 0.3s;
+}
 .park-info-container {
   height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
+  padding: 10px 25px;
+  box-shadow: 0 2px 4px 0 rgba(0,0,0,0.15);
+  background-color: rgb(245, 245, 245);
 }
-.park-planner-collapsible-container {
-  background-color: skyblue;
-  height: 100%;
-  width: 100%;
-  /* display: inline-block; */
+.extended-nps-container {
+  margin-top: 25px;
 }
-
-/* FORECAST STYLES */
 .forecast-container {
-  display: inline-block;
+  border-bottom: 2px solid #DCDCDC;
+}
+.day-container {
+  text-align: center;
 }
 .forecast-title {
-  font-size: 20px;
-  text-align: center;
-  color: #F68B1F ;
+  align-self: center;
+  font-size: 25px;
+  margin-bottom: 0;
 }
 .forecast-day {
   font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-.forecast-phrase {
+.forecast-temp {
+  font-size: 14px;
 }
-.forecast-min {
+.forecast-icon {
+  max-width: 40px;
 }
-.forecast-max {
+@media only screen and (min-width: 768px) {
+  /* On desktop, organize forecast horizontally */
+  .forecast-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    padding: 20px;
+  }
+  .forecast-icon {
+    max-width: 50px;
+  }
 }
-
-#selected-park-li {
-    /* for dev ease */
-  /* background-color: gray;   */
-
-}
-/* To solve the size issue when the LI is converted to a planner window. 
-1) add some unique id to the  containing LI  
-2) set size and height around 800px or something responsive
-3) set some focuser such that the window autoscrolls so the park title is at the top fof the screen, and the 
-planner window takes up all of the screen.
-4) add some transition effects, based on collapsible card style
-5) consider adding a background color to align it logically with the brown title. */

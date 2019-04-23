@@ -104,7 +104,8 @@ async function getAccuLocation() {
     console.log('Here\'s the response from AccuWeather\'s Location API: ', STORE.accuLocationResponse);
     console.log('current state in getAccuLocaton: ', STORE)
   } catch(error) {
-    $('#js-error-message').text(`Uh ho... We couldn't complete your request to Accuweather's Location API. Here's why: ${error.message}`);
+    $('#js-error-message').text(`Uh ho... Something went wrong when fetching weather forecasts. Please try another park.`);
+    console.log(`Here's the error message from the Accuweather API calls: ${error.message}`)
   }
 }
 // ================ ACCUWEATHER FORECAST API CALL ================
@@ -129,9 +130,9 @@ async function getAccuForecast() {
     STORE.accuForecastResponse = await forecastResponse.json();
     renderParkPlannerWithForecast();
     console.log('Here\'s the response from AccuWeather\'s Forecast API: ', STORE.accuForecastResponse);
-    console.log('current state in getAccuForecast: ', STORE)
   } catch(error) {
-    $('#js-error-message').text(`Uh ho... We couldn't complete your request to Accuweather's 5 Forecast API. Here's why: ${error.message}`);
+    $('#js-error-message').text(`Uh ho... Something went wrong when fetching a weather forecast for the park you chose. Please try another one!`);
+    console.log(`Here's what went wrong when fetching the weather forecast: ${error.message}`)
   }
 }
 // ======== DISPLAY RESULTS (ALL APIS) ================
@@ -142,12 +143,12 @@ function renderParkSearchResults(maxResults) {
         // The `ì` added as a data attr represents index of the object in the responseObj.data array from which the result is being displayed. 
         // This is so that other parts of the application (e.g. listeners) can easily locate the data to which this title refers.
         `<li>
-        <h3 data-park-index="${i}" id="js-search-result-title" class="search-result-title">${STORE.npsParksResponse.data[i].fullName}</h3>
         <section class="park-info-container">
+          <h3 data-park-index="${i}" id="js-search-result-title" class="search-result-title">${STORE.npsParksResponse.data[i].fullName}</h3>
           <p id="js-park-state-text"><strong>State(s):</strong> ${STORE.npsParksResponse.data[i].states}</p>
           <p id="js-park-description-text"><strong>Description:</strong> ${STORE.npsParksResponse.data[i].description}</p>
-          <div id="js-park-planner-collapsible-container" class="park-planner-collapsible-container"></div>
-          </section>
+          <div></div>
+        </section>
         </li>`
       );
     }
@@ -164,50 +165,45 @@ function renderParkPlannerWithForecast() {
   const thirdForecastDayNum = new Date(dailyForecastsArr[2].Date).getDay();
   const fourthForecastDayNum = new Date(dailyForecastsArr[3].Date).getDay();
   const fifthForecastDayNum = new Date(dailyForecastsArr[4].Date).getDay();
-  // UPGRADE: Put weather icons in those icon slots: https://developer.accuweather.com/weather-icons (https://amancingh.com/show-weather-with-js-and-weather-api/)
   $(STORE.$this).parent().attr('id', 'selected-park-li');
-  $(STORE.$this).next().html(
-    `<div class="extended-nps-container">
+  $(STORE.$this).next().hide();
+  $(STORE.$this).next().next().hide();
+  $(STORE.$this).next().next().next().html(
+      `<div class="forecast-container"> 
+          <div class="day-container">
+            <p class="forecast-day">Today</p>
+            <img src="assets/weather-icons/${dailyForecastsArr[0].Day.Icon}.png" alt="${dailyForecastsArr[0].Day.IconPhrase}" class="forecast-icon">
+            <p class="forecast-temp">${dailyForecastsArr[0].Temperature.Minimum.Value}&#8457 - ${dailyForecastsArr[0].Temperature.Maximum.Value}&#8457;</p>
+          </div>
+          <div class="day-container">
+            <p class="forecast-day">${weekdays[secondForecastDayNum]}</p>
+            <img src="assets/weather-icons/${dailyForecastsArr[1].Day.Icon}.png" alt="${dailyForecastsArr[1].Day.IconPhrase}" class="forecast-icon">
+            <p class="forecast-temp">${dailyForecastsArr[1].Temperature.Minimum.Value}&#8457 - ${dailyForecastsArr[1].Temperature.Maximum.Value}&#8457;</p>
+          </div>
+          <div class="day-container">
+            <p class="forecast-day">${weekdays[thirdForecastDayNum]}</p>
+            <img src="assets/weather-icons/${dailyForecastsArr[2].Day.Icon}.png" alt="${dailyForecastsArr[2].Day.IconPhrase}" class="forecast-icon">
+            <p class="forecast-temp">${dailyForecastsArr[2].Temperature.Minimum.Value}&#8457 - ${dailyForecastsArr[2].Temperature.Maximum.Value}&#8457;</p>
+          </div>
+          <div class="day-container">
+            <p class="forecast-day">${weekdays[fourthForecastDayNum]}</p>
+            <img src="assets/weather-icons/${dailyForecastsArr[3].Day.Icon}.png" alt="${dailyForecastsArr[2].Day.IconPhrase}" class="forecast-icon">
+            <p class="forecast-temp">${dailyForecastsArr[3].Temperature.Minimum.Value}&#8457 - ${dailyForecastsArr[3].Temperature.Maximum.Value}&#8457;</p>
+          </div>
+          <div class="day-container">
+            <p class="forecast-day">${weekdays[fifthForecastDayNum]}</p>
+            <img src="assets/weather-icons/${dailyForecastsArr[4].Day.Icon}.png" alt="${dailyForecastsArr[4].Day.IconPhrase}" class="forecast-icon">
+            <p class="forecast-temp">${dailyForecastsArr[4].Temperature.Minimum.Value}&#8457 - ${dailyForecastsArr[4].Temperature.Maximum.Value}&#8457;</p>
+          </div>
+        </div>
+    <div class="extended-nps-container">
       <p><strong>State(s):</strong> ${STORE.selectedPark.states}</p>
       <p><strong>Description:</strong> ${STORE.selectedPark.description}</p>
       <p><strong>Designation:</strong> ${STORE.selectedPark.designation}</p>
       <p><strong>General Climate:</strong> ${STORE.selectedPark.weatherInfo}</p>
-      <p><strong>Directions:</strong> ${STORE.selectedPark.directionsInfo}<br><br><a href="${STORE.selectedPark.directionsUrl}" target="_blank">Directions to the Park</a><br><br></p>
-      <p><strong>Website: </strong><a href="${STORE.selectedPark.url}" target="_blank">${STORE.selectedPark.fullName}</a></p>
+      <p><strong>Directions:</strong> ${STORE.selectedPark.directionsInfo}</p>
     </div>
-    <div class="forecast-container">
-      <h3 class="forecast-title">Weather Forecast</h3>  
-      <div class="day-container">
-        <span class="forecast-day">${weekdays[firstForecastDayNum]}</span>
-        <span class="forecast-phrase">${dailyForecastsArr[0].Day.IconPhrase}</span>
-        <span class="forecast-min">Low: ${dailyForecastsArr[0].Temperature.Minimum.Value}&#8457;</span>
-        <span class="forecast-max">High: ${dailyForecastsArr[0].Temperature.Maximum.Value}&#8457;</span>
-      </div>
-      <div class="day-container">
-        <span class="forecast-day">${weekdays[secondForecastDayNum]}</span>
-        <span class="forecast-phrase">${dailyForecastsArr[1].Day.IconPhrase}</span>
-        <span class="forecast-min">Low: ${dailyForecastsArr[1].Temperature.Minimum.Value}&#8457;</span>
-        <span class="forecast-max">High: ${dailyForecastsArr[1].Temperature.Maximum.Value}&#8457;</span>
-      </div>
-      <div class="day-container">
-        <span class="forecast-day">${weekdays[thirdForecastDayNum]}</span>
-        <span class="forecast-phrase">${dailyForecastsArr[2].Day.IconPhrase}</span>
-        <span class="forecast-min">Low: ${dailyForecastsArr[2].Temperature.Minimum.Value}&#8457;</span>
-        <span class="forecast-max">High: ${dailyForecastsArr[2].Temperature.Maximum.Value}&#8457;</span>
-      </div>
-      <div class="day-container">
-        <span class="forecast-day">${weekdays[fourthForecastDayNum]}</span>
-        <span class="forecast-phrase">${dailyForecastsArr[3].Day.IconPhrase}</span>
-        <span class="forecast-min">Low: ${dailyForecastsArr[3].Temperature.Minimum.Value}&#8457;</span>
-        <span class="forecast-max">High: ${dailyForecastsArr[3].Temperature.Maximum.Value}&#8457;</span>
-      </div>
-      <div class="day-container">
-        <span class="forecast-day">${weekdays[fifthForecastDayNum]}</span>
-        <span class="forecast-phrase">${dailyForecastsArr[4].Day.IconPhrase}</span>
-        <span class="forecast-min">Low: ${dailyForecastsArr[4].Temperature.Minimum.Value}&#8457;</span>
-        <span class="forecast-max">High: ${dailyForecastsArr[4].Temperature.Maximum.Value}&#8457;</span>
-      </div>
-    </div>`
+    <a class="park-directions-button" href="${STORE.selectedPark.directionsUrl}" target="_blank">Get Directions</a>`
   ); 
 }
 function renderParkPlannerNoWeather() {
@@ -220,7 +216,7 @@ function renderParkPlannerNoWeather() {
       <p><strong>Designation:</strong> ${STORE.selectedPark.designation}</p>
       <p><strong>General Climate:</strong> ${STORE.selectedPark.weatherInfo}</p>
       <p><strong>Directions:</strong> ${STORE.selectedPark.directionsInfo}<br><br><a href="${STORE.selectedPark.directionsUrl}" target="_blank">Directions to the Park</a><br><br></p>
-      <p><strong>Website: </strong><a href="${STORE.selectedPark.url}" target="_blank">${STORE.selectedPark.fullName}</a></p>
+      <p><strong>Website: </strong><a href="${STORE.selectedPark.url}" target="_blank">${STORE.selectedPark.name}</a></p>
     </div>`
   ); 
 }
