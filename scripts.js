@@ -207,15 +207,17 @@ function renderParkPlannerWithForecast() {
 function renderParkPlannerNoWeather() {
   console.log('current state in renderParkPlanner, right before displaying more info: ', STORE)
   $(STORE.$this).parent().attr('id', 'selected-park-li');
-  $(STORE.$this).next().html(
+  $(STORE.$this).next().hide();
+  $(STORE.$this).next().next().hide();
+  $(STORE.$this).next().next().next().html(
     `<div class="extended-nps-container">
       <p><strong>State(s):</strong> ${STORE.selectedPark.states}</p>
       <p><strong>Description:</strong> ${STORE.selectedPark.description}</p>
       <p><strong>Designation:</strong> ${STORE.selectedPark.designation}</p>
       <p><strong>General Climate:</strong> ${STORE.selectedPark.weatherInfo}</p>
-      <p><strong>Directions:</strong> ${STORE.selectedPark.directionsInfo}<br><br><a href="${STORE.selectedPark.directionsUrl}" target="_blank">Directions to the Park</a><br><br></p>
-      <p><strong>Website: </strong><a href="${STORE.selectedPark.url}" target="_blank">${STORE.selectedPark.name}</a></p>
-    </div>`
+      <p><strong>Directions:</strong> ${STORE.selectedPark.directionsInfo}</p>
+  </div>
+  <a class="park-directions-button" href="${STORE.selectedPark.directionsUrl}" target="_blank">Get Directions</a>`
   ); 
 }
 // ========= ON DOC READY ===========
